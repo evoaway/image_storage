@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+    <title>Image Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            background-color: #e7e7e7;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload an Image and Enter Labels for Classification</h1>
+    <form method="post" enctype="multipart/form-data">
+        <textarea name="labels" placeholder="Enter labels separated by comma">{{ labels_input }}</textarea>
+        <br>
+        <input type="file" name="file">
+        <input type="submit" value="Upload">
+    </form>
+    {% if result %}
+        <h2>Classification Result:</h2>
+        <p>{{ result }}</p>
+    {% endif %}
+    <div>
+        <form action="/images" method="get">
+            <input type="submit" value="My Gallery">
+        </form>
+    </div>
+    <div>
+        <form action="/exit" method="get">
+            <input type="submit" value="Exit">
+        </form>
+    </div>
+</body>
+</html>

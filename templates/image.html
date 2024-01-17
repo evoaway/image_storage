@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Detail</title>
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        div.gallery {
+          margin: 5px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          width: 360px;
+        }
+
+        div.gallery img {
+          width: 100%;
+          height: auto;
+        }
+        input {
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #4caf50;
+            color: #fff;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery">
+        <img src="{{ image[3] }}" alt="Image">
+    </div>
+    <div>
+        <ul>
+            {% for key, value in metadata.items() %}
+                <li><strong>{{ key }}:</strong> {{ value }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <form action="/images" method="get">
+        <input type="submit" value="Back to images">
+    </form>
+    <form action="{{ url_for('compress_image', image_id=image[0]) }}" method="post">
+        <label for="quality">Quality:</label>
+            <select id="quality" name="quality">
+                <option value="90">90</option>
+                <option value="50">50</option>
+                <option value="10">10</option>
+            </select>
+        <input type="submit" value="Compress">
+    </form>
+    <form action="{{ url_for('delete_image', image_id=image[0]) }}" method="post">
+        <input type="submit" value="Delete">
+    </form>
+</body>
+</html>
