@@ -56,7 +56,7 @@
     <form method="post" enctype="multipart/form-data">
         <textarea name="labels" placeholder="Enter labels separated by comma">{{ labels_input }}</textarea>
         <br>
-        <input type="file" name="file">
+        <input type="file" name="image" accept="image/*" required>
         <input type="submit" value="Upload">
     </form>
     {% if result %}

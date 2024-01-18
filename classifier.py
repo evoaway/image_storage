@@ -4,7 +4,6 @@ from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras.applications.inception_v3 import preprocess_input, decode_predictions
-from sklearn.metrics.pairwise import cosine_similarity
 
 keras_model = InceptionV3(weights='imagenet')
 
@@ -16,9 +15,8 @@ def clip_classify(path, classes):
     image = preprocess(Image.open(path)).unsqueeze(0).to(device)
     text = clip.tokenize(classes).to(device)
     with torch.no_grad():
-        image_features = clip_model.encode_image(image)
-        text_features = clip_model.encode_text(text)
-
+        # image_features = clip_model.encode_image(image)
+        # text_features = clip_model.encode_text(text)
         logits_per_image, logits_per_text = clip_model(image, text)
         probs = logits_per_image.softmax(dim=-1).cpu().numpy()
         class_index = probs.argmax()

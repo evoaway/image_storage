@@ -16,7 +16,7 @@ app.config['MYSQL_PASSWORD'] = 'password'
 app.config['MYSQL_DB'] = 'imagesdb'
 mysql = MySQL(app)
 id = -1  # temporary solution
-
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -24,7 +24,6 @@ def login():
         global id
         name = request.form.get('name')
         password = request.form.get('password')
-        print(name, password)
         cur = mysql.connection.cursor()
         cur.execute('''SELECT * FROM users WHERE name = %s and password = %s''', (name, password))
         data = cur.fetchall()
@@ -56,7 +55,8 @@ def exit():
     id = -1
     return redirect(url_for('login'))
 
-
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     result = None
@@ -64,14 +64,15 @@ def upload_file():
     labels_input = ''
     if request.method == 'POST':
         labels_input = request.form['labels']
-        if 'file' not in request.files:
+        if 'image' not in request.files:
             result = 'No file part'
         else:
-            file = request.files['file']
-            if file.filename == '':
-                result = 'No selected file'
+            file = request.files['image']
+            # if file.filename == '':
+            #     result = 'No selected file'
+            if not allowed_file(file.filename):
+                result = 'Invalid file type. Only allowed file types: png, jpg, jpeg'
             else:
-                # image_path = 'temp_image.jpg'
                 os.makedirs(f'static/pictures', exist_ok=True)
                 image_path = '%s/%s.jpg' % ('static/pictures', str(uuid.uuid4()))
                 file.save(image_path)
