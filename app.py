@@ -1,6 +1,8 @@
 import uuid
 from flask import Flask, render_template, request, flash, redirect, url_for
 import os
+
+import utils
 from classifier import clip_classify, keras_classify
 from flask_mysqldb import MySQL
 
@@ -27,9 +29,9 @@ def login():
         cur.execute('''SELECT * FROM users WHERE name = %s and password = %s''', (name, password))
         data = cur.fetchall()
         cur.close()
-        id = data[0][0]
-        print(data, id)
-        return redirect(url_for('upload_file'))
+        if len(data) != 0:
+            id = data[0][0]
+            return redirect(url_for('upload_file'))
     return render_template('login.html')
 
 
@@ -69,16 +71,21 @@ def upload_file():
             if file.filename == '':
                 result = 'No selected file'
             else:
-                image_path = 'temp_image.jpg'
+                # image_path = 'temp_image.jpg'
+                os.makedirs(f'static/pictures', exist_ok=True)
+                image_path = '%s/%s.jpg' % ('static/pictures', str(uuid.uuid4()))
                 file.save(image_path)
+                hash_name = utils.calculate_image_hash(image_path)
+                new_path = '%s/%s.jpg' % ('static/pictures', hash_name)
+                if os.path.exists(new_path):
+                    os.remove(image_path)
+                else:
+                    os.rename(image_path, new_path)
                 if labels_input:
                     classes = [label.strip() for label in labels_input.split(',')]
-                    result = clip_classify(image_path, classes)
+                    result = clip_classify(new_path, classes)
                 else:
-                    result = keras_classify(image_path)
-                os.makedirs(f'static/{result}', exist_ok=True)
-                new_path = '%s/%s/%s.jpg' % ('static', result, str(uuid.uuid4()))
-                os.rename(image_path, new_path)
+                    result = keras_classify(new_path)
                 cur = mysql.connection.cursor()
                 cur.execute('''INSERT INTO images (userid, class, filepath) VALUES (%s, %s, %s)''',
                             (id, result, '../' + new_path))
@@ -92,9 +99,9 @@ def get_all_images():
     cur = mysql.connection.cursor()
     cur.execute('''SELECT distinct class FROM images WHERE userid = %s''', (id,))
     classes_tuple = cur.fetchall()
-    classes = [i[0] for i in classes_tuple]
+    classes = ["all"] + [i[0] for i in classes_tuple]
     cur.close()
-    if request.method == 'GET':
+    if request.method == 'GET' or request.form.get('class') == "all":
         cur = mysql.connection.cursor()
         cur.execute('''SELECT * FROM images WHERE userid = %s''', (id,))
         images = cur.fetchall()
@@ -126,7 +133,19 @@ def compress_image(image_id):
     image = cur.fetchall()
     cur.close()
     quality = request.form.get('quality')
-    compress(image[0][3][3:], int(quality))
+    compressed_image_path = '%s/%s.jpg' % ('static/pictures', str(uuid.uuid4()))
+    compress(image[0][3][3:], int(quality), compressed_image_path)
+    hash_name = utils.calculate_image_hash(compressed_image_path)
+    new_path = '%s/%s.jpg' % ('static/pictures', hash_name)
+    if os.path.exists(new_path):
+        os.remove(compressed_image_path)
+    else:
+        os.rename(compressed_image_path, new_path)
+    cur = mysql.connection.cursor()
+    cur.execute('''UPDATE images SET filepath = %s WHERE id = %s''', ('../' + new_path, image_id,))
+    mysql.connection.commit()
+    cur.close()
+    delete_unnecessary(image[0][3])
     return redirect(url_for('get_all_images'))
 
 
@@ -136,12 +155,24 @@ def delete_image(image_id):
     cur.execute('''SELECT * FROM images WHERE id = %s''', (image_id,))
     image = cur.fetchall()
     cur.close()
-    os.remove(image[0][3][3:])
+    file_path = image[0][3]
+
     cur = mysql.connection.cursor()
     cur.execute('''DELETE FROM images WHERE id = %s''', (image_id,))
     mysql.connection.commit()
     cur.close()
+    delete_unnecessary(file_path)
+
     return redirect(url_for('get_all_images'))
+
+def delete_unnecessary(path):
+    cur = mysql.connection.cursor()
+    cur.execute('''SELECT * FROM images WHERE filepath = %s''', (path,))
+    images = cur.fetchall()
+    cur.close()
+    print(len(images))
+    if len(images) == 0:
+        os.remove(path[3:])
 
 
 if __name__ == '__main__':

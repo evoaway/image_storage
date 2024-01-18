@@ -11,6 +11,7 @@ keras_model = InceptionV3(weights='imagenet')
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, preprocess = clip.load("ViT-B/32", device=device)
 
+
 def clip_classify(path, classes):
     image = preprocess(Image.open(path)).unsqueeze(0).to(device)
     text = clip.tokenize(classes).to(device)
@@ -22,6 +23,7 @@ def clip_classify(path, classes):
         probs = logits_per_image.softmax(dim=-1).cpu().numpy()
         class_index = probs.argmax()
     return classes[class_index]
+
 
 def keras_classify(path):
     image = tf.keras.preprocessing.image.load_img(path, target_size=(299, 299))

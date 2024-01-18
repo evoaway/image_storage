@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 from PIL import Image
@@ -23,6 +24,12 @@ def get_metadata(filepath):
     }
     return info_dict
 
-def compress(filepath, quality):
+def compress(filepath, quality, new_filepath):
     image = Image.open(filepath)
-    image.save(filepath, optimize=True, quality=quality)
+    image.save(new_filepath, optimize=True, quality=quality)
+
+def calculate_image_hash(file_path):
+    with open(file_path, 'rb') as f:
+        file_content = f.read()
+        sha256_hash = hashlib.sha256(file_content).hexdigest()
+    return sha256_hash
